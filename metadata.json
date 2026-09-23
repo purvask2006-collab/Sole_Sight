@@ -1,0 +1,6 @@
+{
+  "name": "SoleSight AI",
+  "description": "Intelligent solar panel soiling detection and autonomous cleaning management system for 10 MW Bikaner Solar Park, Rajasthan - Smart India Hackathon 2024.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

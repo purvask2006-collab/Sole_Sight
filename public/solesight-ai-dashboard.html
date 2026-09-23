@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoleSight AI | Solar Asset Intelligence Dashboard</title>
+  <meta name="description" content="Intelligent solar panel soiling detection and autonomous cleaning management system for 10 MW Bikaner Solar Park, Rajasthan - Smart India Hackathon 2024.">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Font Awesome Icons via CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            solar: {
+              navy: '#0A2E5C',
+              dark: '#061D3B',
+              orange: '#F5A62B',
+              yellow: '#FFD54F',
+              green: '#27AE60',
+              red: '#E74C3C',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* Cleaning Pulse Animation */
+    @keyframes cleaningPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+        border-color: #3b82f6;
+      }
+      50% {
+        box-shadow: 0 0 16px 4px rgba(59, 130, 246, 0.95);
+        border-color: #93c5fd;
+      }
+    }
+    .cleaning-pulse {
+      animation: cleaningPulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Dew Fall Animation */
+    @keyframes dropFall {
+      0% { transform: translateY(-15px); opacity: 0; }
+      50% { opacity: 0.9; }
+      100% { transform: translateY(20px); opacity: 0; }
+    }
+    .dew-drop-anim {
+      animation: dropFall 1.8s ease-in-out infinite;
+    }
+
+    /* Photovoltaic wafer grid pattern */
+    .solar-wafer-pattern {
+      background-image: 
+        linear-gradient(to right, rgba(255,255,255,0.14) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.14) 1px, transparent 1px);
+      background-size: 8px 8px;
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-amber-500 selection:text-white">
+
+  <!-- ======================================================= -->
+  <!-- 1. TOP NAVIGATION BAR                                   -->
+  <!-- ======================================================= -->
+  <header class="bg-solar-navy text-white px-4 sm:px-6 py-3.5 shadow-lg border-b border-blue-950 sticky top-0 z-40 backdrop-blur">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <!-- Title & Location -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/20 shrink-0">
+          <i class="fa-solid fa-solar-panel text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">
+              SoleSight AI <span class="text-amber-400 font-normal">|</span> Solar Asset Intelligence Dashboard
+            </h1>
+            <span class="text-[11px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full bg-blue-900/90 text-amber-300 border border-blue-700/60 shadow-xs">
+              Smart India Hackathon 2024
+            </span>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-300 mt-0.5 flex-wrap">
+            <span class="flex items-center gap-1 font-medium">
+              <i class="fa-solid fa-location-dot text-amber-400 text-xs"></i>
+              Bikaner Solar Park, Rajasthan | 10 MW
+            </span>
+            <span class="text-slate-500 hidden sm:inline">·</span>
+            <span class="inline-flex items-center gap-1.5 text-emerald-400 font-semibold">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              System Online
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Clock & Status Badge -->
+      <div class="flex items-center gap-3 self-end md:self-center">
+        <div class="px-3.5 py-1.5 rounded-lg bg-blue-950/70 border border-blue-800/60 text-xs font-mono text-slate-200 flex items-center gap-2 shadow-inner">
+          <i class="fa-regular fa-clock text-amber-400"></i>
+          <span id="liveClockDisplay">--:--:-- IST</span>
+        </div>
+        <div class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span>INSAT-3D Synced</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- DUST STORM WARNING BANNER (Toggled by JS) -->
+  <div id="dustStormBanner" class="hidden bg-rose-600 text-white px-4 py-2 text-xs font-bold shadow-md animate-pulse">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <span class="flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-amber-300 text-sm"></i>
+        <span>DUST STORM DETECTED — SATELLITE ALERT ACTIVE: Severe aerosol optical depth (AOD 1.84) detected over Bikaner sector. Automated robot fleet on standby.</span>
+      </span>
+      <button onclick="dismissDustStormAlert()" class="underline hover:text-slate-200 ml-4 font-normal text-xs">
+        Dismiss
+      </button>
+    </div>
+  </div>
+
+  <!-- DEW HARVEST BANNER (Toggled by JS) -->
+  <div id="morningDewBanner" class="hidden bg-blue-600 text-white px-4 py-2 text-xs font-semibold shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-center gap-2">
+      <i class="fa-solid fa-droplet text-cyan-200 animate-bounce"></i>
+      <span>Morning dew harvesting cycle engaged — passive dust aggregation &amp; recovery active.</span>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MAIN CONTAINER                                          -->
+  <!-- ======================================================= -->
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6 flex-1">
+
+    <!-- ======================================================= -->
+    <!-- 2. KPI CARDS ROW (4 cards with animated counters)        -->
+    <!-- ======================================================= -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: Current Generation -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Current Generation</p>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span id="kpiCurrentGen" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono">
+                6.8 MW
+              </span>
+            </div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600">
+            <i class="fa-solid fa-bolt text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-rose-600">
+          <i class="fa-solid fa-arrow-trend-down"></i>
+          <span id="kpiGenTrend">-12% vs clean baseline</span>
+          <span class="text-slate-400 font-normal">· (7.8 MW nominal)</span>
+        </div>
+        <!-- Progress bar -->
+        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
+          <div id="kpiGenBar" class="bg-amber-500 h-1.5 rounded-full transition-all duration-500" style="width: 68%;"></div>
+        </div>
+      </div>
+
+      <!-- Card 2: Soiling Ratio -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Soiling Ratio</p>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span id="kpiSoilingRatio" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono">
+                18.3%
+              </span>
+            </div>
+          </div>
+          <div id="kpiSoilingIconBox" class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center">
+            <i class="fa-solid fa-sun text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+          <span id="kpiSoilingBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-md inline-flex items-center gap-1 bg-amber-100 text-amber-900">
+            <span id="kpiSoilingDot" class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span id="kpiSoilingText">Moderate Soiling</span>
+          </span>
+          <span class="text-xs text-slate-500">24 blocks active</span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
+          <div id="kpiSoilingBar" class="bg-amber-500 h-1.5 rounded-full transition-all duration-500" style="width: 45%;"></div>
+        </div>
+      </div>
+
+      <!-- Card 3: Daily Revenue Loss -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Daily Revenue Loss</p>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="kpiRevenueLoss" class="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight font-mono">
+                ₹42,500
+              </span>
+            </div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/60 flex items-center justify-center text-rose-600">
+            <i class="fa-solid fa-indian-rupee-sign text-lg"></i>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-rose-700 font-medium flex items-center gap-1">
+          <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+          Due to soiling accumulation
+        </p>
+        <p id="kpiHourlyLoss" class="text-[11px] text-slate-500 mt-1 font-mono">
+          ~₹1,770/hr at current irradiance
+        </p>
+      </div>
+
+      <!-- Card 4: Water Saved Today -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Water Saved Today</p>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="kpiWaterSaved" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight font-mono">
+                1,240 Liters
+              </span>
+            </div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600">
+            <i class="fa-solid fa-leaf text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-1.5 text-xs text-emerald-700 font-semibold">
+          <i class="fa-solid fa-droplet text-emerald-600"></i>
+          <span>Dry-brush + Dew Harvesting</span>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-1">
+          vs manual wash (1,800 L conventional)
+        </p>
+      </div>
+
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 3. MAIN VISUALIZATION AREA (2-column: 60% Left, 40% Right) -->
+    <!-- ======================================================= -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- LEFT COLUMN (60% width -> 7 cols on lg) -->
+      <div class="lg:col-span-7 bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-solar-navy"></i>
+              Solar Farm Map View
+              <span class="text-xs font-mono font-normal text-slate-500">
+                (24 Blocks · 6 × 4 Grid)
+              </span>
+            </h2>
+            <p class="text-xs text-slate-500">
+              Hover over any block for telemetry or click to dispatch spot cleaning.
+            </p>
+          </div>
+          <button onclick="triggerAutonomousCleaning()" id="btnCleanAllCriticalTop" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-robot"></i>
+            <span>Clean All Critical</span>
+          </button>
+        </div>
+
+        <!-- 24 Solar Panel Blocks Grid Container -->
+        <div class="relative">
+          <!-- Dew Droplet Animation Layer (Toggled by JS) -->
+          <div id="dewDropletOverlay" class="hidden absolute inset-0 pointer-events-none z-20 overflow-hidden flex flex-wrap gap-6 justify-around p-4">
+            <div class="dew-drop-anim text-blue-400"><i class="fa-solid fa-droplet text-xl"></i></div>
+            <div class="dew-drop-anim text-blue-400" style="animation-delay: 0.2s;"><i class="fa-solid fa-droplet text-xl"></i></div>
+            <div class="dew-drop-anim text-blue-400" style="animation-delay: 0.5s;"><i class="fa-solid fa-droplet text-xl"></i></div>
+            <div class="dew-drop-anim text-blue-400" style="animation-delay: 0.3s;"><i class="fa-solid fa-droplet text-xl"></i></div>
+            <div class="dew-drop-anim text-blue-400" style="animation-delay: 0.7s;"><i class="fa-solid fa-droplet text-xl"></i></div>
+            <div class="dew-drop-anim text-blue-400" style="animation-delay: 0.4s;"><i class="fa-solid fa-droplet text-xl"></i></div>
+          </div>
+
+          <!-- The 6x4 Grid -->
+          <div id="solarFarmGrid" class="grid grid-cols-6 gap-2 sm:gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800 shadow-inner">
+            <!-- Tiles dynamically injected by JavaScript -->
+          </div>
+
+          <!-- Dynamic Floating Tooltip -->
+          <div id="blockTooltip" class="hidden fixed z-50 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-3 w-64 p-3 bg-slate-900/95 text-white rounded-xl shadow-2xl border border-slate-700 backdrop-blur text-xs space-y-1.5">
+            <div class="flex items-center justify-between border-b border-slate-700/80 pb-1.5">
+              <span id="tooltipBlockId" class="font-bold text-amber-400 font-mono text-sm">Block A1</span>
+              <span id="tooltipBadge" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/30 text-emerald-300">Clean</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
+              <div>
+                <p class="text-slate-400 text-[10px]">Soiling Level</p>
+                <p id="tooltipSoiling" class="font-bold text-white text-xs">8.5%</p>
+              </div>
+              <div>
+                <p class="text-slate-400 text-[10px]">Current Output</p>
+                <p id="tooltipOutput" class="font-bold text-white text-xs">382 kW</p>
+              </div>
+              <div>
+                <p class="text-slate-400 text-[10px]">Last Cleaned</p>
+                <p id="tooltipLastCleaned" class="font-medium text-slate-200 text-[11px] truncate">05:15 AM today</p>
+              </div>
+              <div>
+                <p class="text-slate-400 text-[10px]">Next Recommend</p>
+                <p id="tooltipNextClean" class="font-semibold text-[11px] text-emerald-400">Nominal Schedule</p>
+              </div>
+            </div>
+            <div class="text-[10px] text-slate-400 border-t border-slate-800 pt-1 flex items-center justify-between">
+              <span>Rajasthan High Irradiance</span>
+              <span class="text-amber-300">Click to Clean</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend Below Grid -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs text-slate-600 border-t border-slate-100">
+          <div class="flex flex-wrap items-center gap-4">
+            <span class="flex items-center gap-1.5 font-medium">
+              <span class="w-3.5 h-3.5 rounded bg-emerald-600 border border-emerald-400"></span>
+              Clean (&lt;10%)
+            </span>
+            <span class="flex items-center gap-1.5 font-medium">
+              <span class="w-3.5 h-3.5 rounded bg-amber-500 border border-amber-300"></span>
+              Moderate (10–25%)
+            </span>
+            <span class="flex items-center gap-1.5 font-medium">
+              <span class="w-3.5 h-3.5 rounded bg-rose-600 border border-rose-400"></span>
+              Critical (&gt;25%)
+            </span>
+            <span class="flex items-center gap-1.5 font-medium">
+              <span class="w-3.5 h-3.5 rounded bg-blue-600 border border-blue-400 animate-pulse"></span>
+              Cleaning in Progress
+            </span>
+          </div>
+          <span id="gridSummaryCount" class="text-[11px] text-slate-400 italic">
+            4 critical / 14 moderate
+          </span>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN (40% width -> 5 cols on lg) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Power Output Chart (24h) -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-line text-amber-500"></i>
+                Power Output Chart (24 Hours)
+              </h3>
+              <p class="text-[11px] text-slate-500">
+                Red shaded area highlights generation loss due to soiling.
+              </p>
+            </div>
+            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
+              10 MW Peak
+            </span>
+          </div>
+
+          <!-- Chart Canvas -->
+          <div class="h-56 w-full relative">
+            <canvas id="powerChartCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Weather Panel -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-cloud-sun text-rose-500"></i>
+              Weather &amp; Environmental Sensors
+            </h3>
+            <span class="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+              Live Sensor Feed
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+            <!-- Temp -->
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                <i class="fa-solid fa-temperature-high text-amber-500"></i>
+                <span>Temperature</span>
+              </div>
+              <p id="weatherTemp" class="text-lg font-extrabold font-mono text-slate-900">38°C</p>
+              <p class="text-[10px] text-slate-400">Irradiance: 842 W/m²</p>
+            </div>
+
+            <!-- Wind -->
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                <i class="fa-solid fa-wind text-blue-500"></i>
+                <span>Wind Speed</span>
+              </div>
+              <p id="weatherWind" class="text-lg font-extrabold font-mono text-slate-900">18 km/h</p>
+              <p class="text-[10px] text-slate-400">Direction: WNW (Desert)</p>
+            </div>
+
+            <!-- Humidity -->
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                <i class="fa-solid fa-droplet text-cyan-500"></i>
+                <span>Humidity</span>
+              </div>
+              <p id="weatherHumidity" class="text-lg font-extrabold font-mono text-slate-900">24%</p>
+              <p class="text-[10px] text-slate-400">Dew Point: 11.2°C</p>
+            </div>
+
+            <!-- Dust Index -->
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                <span>Dust Index</span>
+              </div>
+              <p id="weatherDustIndex" class="text-base font-extrabold font-mono text-amber-600">High</p>
+              <p class="text-[10px] text-slate-400">Optical Sensor Active</p>
+            </div>
+
+            <!-- Next Rain -->
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60 col-span-1 sm:col-span-2">
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                <i class="fa-solid fa-cloud-rain text-indigo-500"></i>
+                <span>Precipitation Forecast</span>
+              </div>
+              <p class="text-xs font-bold text-slate-800">No rain forecast (7 days)</p>
+              <p class="text-[10px] text-slate-500">Clean trigger priority: <span class="font-semibold text-emerald-600">Immediate</span></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 4. AI DECISION ENGINE PANEL                             -->
+    <!-- ======================================================= -->
+    <section class="bg-solar-navy text-white rounded-2xl p-6 sm:p-7 shadow-xl border border-blue-900/80 relative overflow-hidden">
+      <!-- Subtle solar cell background pattern -->
+      <div class="absolute inset-0 opacity-5 solar-wafer-pattern pointer-events-none"></div>
+
+      <div class="relative z-10 space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-blue-800/80 pb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400">
+              <i class="fa-solid fa-brain text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                AI RECOMMENDATION ENGINE
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  AUTONOMOUS MODEL v3.2
+                </span>
+              </h3>
+              <p class="text-xs text-blue-200">
+                Optimizing cleaning schedule based on soiling levels, weather forecast &amp; financial ROI
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-300 font-mono">Real-time Optimization</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          </div>
+        </div>
+
+        <!-- Current Analysis, LCR, and Trigger Button -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          
+          <!-- Left: Current Analysis & LCR -->
+          <div class="md:col-span-7 space-y-4">
+            <div class="bg-blue-950/70 p-4 rounded-xl border border-blue-800/60 space-y-2">
+              <div class="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider">
+                <i class="fa-solid fa-sparkles"></i>
+                Current Plant Analysis
+              </div>
+              <p id="aiCurrentAnalysisText" class="text-sm font-medium text-slate-100 leading-relaxed">
+                Block A3, A7, B2 showing soiling loss &gt; cleaning cost
+              </p>
+              <p class="text-xs text-blue-300/80">
+                <span class="font-semibold text-blue-200">Alternative:</span> Wait on Blocks C1-C6 — Rain expected in 48 hours
+              </p>
+            </div>
+
+            <!-- Metrics pair: LCR & ROI -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-blue-950/40 p-3.5 rounded-xl border border-blue-800/40">
+                <span class="text-xs text-slate-400 block mb-1">Loss-to-Cost Ratio (LCR)</span>
+                <span id="aiLcrValue" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono tracking-tight">
+                  4.2 : 1
+                </span>
+                <span class="text-[11px] text-slate-300 block mt-0.5">Threshold &gt; 3.0 triggers deploy</span>
+              </div>
+
+              <div class="bg-blue-950/40 p-3.5 rounded-xl border border-blue-800/40">
+                <span class="text-xs text-slate-400 block mb-1">Estimated ROI</span>
+                <span id="aiRoiValue" class="text-2xl sm:text-3xl font-extrabold text-amber-300 font-mono tracking-tight">
+                  ₹18,400
+                </span>
+                <span class="text-[11px] text-slate-300 block mt-0.5">net gain if cleaned now</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Trigger Action Button -->
+          <div class="md:col-span-5 flex flex-col justify-center items-center p-4 bg-blue-950/60 rounded-xl border border-blue-800/60 text-center space-y-3">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Recommended Action
+            </span>
+
+            <button
+              id="btnTriggerCleaning"
+              onclick="triggerAutonomousCleaning()"
+              class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/60 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <i class="fa-solid fa-robot text-base group-hover:scale-110 transition-transform"></i>
+              <span id="btnTriggerText">TRIGGER CLEANING</span>
+              <i class="fa-solid fa-chevron-right text-xs ml-1"></i>
+            </button>
+
+            <p class="text-[11px] text-slate-400">
+              Dispatches dry-brush robotic fleet to critical blocks. Zero water wasted.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Flowchart Visualization -->
+        <div class="border-t border-blue-800/80 pt-5">
+          <p class="text-xs font-semibold text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+            <i class="fa-solid fa-diagram-project text-amber-400"></i>
+            AI Decision Flowchart
+          </p>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <!-- Step 1 -->
+            <div class="bg-blue-950/80 p-3 rounded-lg border border-blue-800/60 flex items-start gap-2.5">
+              <div class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center shrink-0">
+                1
+              </div>
+              <div>
+                <p class="text-xs font-bold text-white">Dust Detected</p>
+                <p class="text-[10px] text-slate-300 mt-0.5">Optical sensors + Satellite PM aerosol</p>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="bg-blue-950/80 p-3 rounded-lg border border-blue-800/60 flex items-start gap-2.5">
+              <div class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center shrink-0">
+                2
+              </div>
+              <div>
+                <p class="text-xs font-bold text-white">ROI Calculation</p>
+                <p class="text-[10px] text-slate-300 mt-0.5">Power Loss (₹) vs Cleaning OpEx (₹)</p>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="bg-blue-950/80 p-3 rounded-lg border border-blue-800/60 flex items-start gap-2.5">
+              <div class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center shrink-0">
+                3
+              </div>
+              <div>
+                <p class="text-xs font-bold text-white">Yes / No Gate</p>
+                <p class="text-[10px] text-slate-300 mt-0.5">LCR &gt; 3.0 &amp; Rain forecast check</p>
+              </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="bg-blue-950/80 p-3 rounded-lg border border-emerald-500/50 flex items-start gap-2.5">
+              <div class="w-6 h-6 rounded-full bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center shrink-0">
+                4
+              </div>
+              <div>
+                <p class="text-xs font-bold text-emerald-300">Action: Deployed</p>
+                <p class="text-[10px] text-slate-300 mt-0.5">Autonomous robot or dew harvest hold</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 5. CLEANING ACTIVITY LOG                                -->
+    <!-- ======================================================= -->
+    <section class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-solar-orange"></i>
+            Cleaning Activity Log
+          </h3>
+          <p class="text-xs text-slate-500">
+            Real-time audit of automated cleanings, triggers, water expenditure, and power recovery.
+          </p>
+        </div>
+        <span id="logCountLabel" class="text-xs font-mono text-slate-500">
+          Showing recent events
+        </span>
+      </div>
+
+      <div class="overflow-x-auto max-h-64 overflow-y-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="sticky top-0 bg-slate-50 z-10 shadow-xs">
+            <tr class="text-slate-600 border-b border-slate-200">
+              <th class="py-2.5 px-3 font-semibold">Time</th>
+              <th class="py-2.5 px-3 font-semibold">Block</th>
+              <th class="py-2.5 px-3 font-semibold">Action</th>
+              <th class="py-2.5 px-3 font-semibold">Trigger</th>
+              <th class="py-2.5 px-3 font-semibold">Water Used</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Recovery</th>
+            </tr>
+          </thead>
+          <tbody id="cleaningActivityLogBody" class="divide-y divide-slate-100">
+            <!-- Injected by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 6. BOTTOM CONTROL BAR (Interactive Simulation Controls)  -->
+    <!-- ======================================================= -->
+    <section class="bg-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-800 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-amber-400 text-lg"></i>
+          <h3 class="text-sm sm:text-base font-bold text-white tracking-wide">
+            SIMULATION CONTROL PANEL
+          </h3>
+        </div>
+        <span class="text-xs text-slate-400">
+          Adjust sliders &amp; trigger events to simulate solar park dynamics in real time
+        </span>
+      </div>
+
+      <!-- Sliders & Toggles -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- Slider 1: Soiling Rate -->
+        <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+          <div class="flex items-center justify-between text-xs">
+            <label for="sliderSoiling" class="font-semibold text-slate-300">Soiling Rate</label>
+            <span id="sliderSoilingValue" class="font-mono font-bold text-amber-400">18.3%</span>
+          </div>
+          <input
+            id="sliderSoiling"
+            type="range"
+            min="0"
+            max="40"
+            step="0.5"
+            value="18.3"
+            oninput="onSoilingSliderChange(parseFloat(this.value))"
+            class="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+          />
+          <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+            <span>0% (Clean)</span>
+            <span>20% (Moderate)</span>
+            <span>40% (Severe)</span>
+          </div>
+        </div>
+
+        <!-- Slider 2: Wind Speed -->
+        <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+          <div class="flex items-center justify-between text-xs">
+            <label for="sliderWind" class="font-semibold text-slate-300">Wind Speed</label>
+            <span id="sliderWindValue" class="font-mono font-bold text-blue-400">18 km/h</span>
+          </div>
+          <input
+            id="sliderWind"
+            type="range"
+            min="0"
+            max="50"
+            step="1"
+            value="18"
+            oninput="onWindSliderChange(parseInt(this.value))"
+            class="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+          />
+          <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+            <span>0 km/h</span>
+            <span>25 km/h</span>
+            <span>50 km/h</span>
+          </div>
+        </div>
+
+        <!-- Toggle 1: Enable Dew Harvesting -->
+        <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-200">Enable Dew Harvesting</p>
+            <p class="text-[10px] text-slate-400">Nocturnal moisture capture</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggleDewHarvesting" checked onchange="onDewToggleChange(this.checked)" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <!-- Toggle 2: Enable Satellite Dust Alerts -->
+        <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-200">Satellite Dust Alerts</p>
+            <p class="text-[10px] text-slate-400">INSAT-3D &amp; Sentinel AOD</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggleSatelliteAlerts" checked onchange="onSatelliteToggleChange(this.checked)" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-3 pt-2">
+        <!-- Button: Simulate Dust Storm (red) -->
+        <button
+          onclick="simulateDustStorm()"
+          class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors flex items-center gap-2 shadow-md shadow-rose-950/30 cursor-pointer"
+        >
+          <i class="fa-solid fa-triangle-exclamation text-amber-300"></i>
+          <span>Simulate Dust Storm</span>
+        </button>
+
+        <!-- Button: Simulate Morning Dew (blue) -->
+        <button
+          onclick="simulateMorningDew()"
+          class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors flex items-center gap-2 shadow-md shadow-blue-950/30 cursor-pointer"
+        >
+          <i class="fa-solid fa-droplet text-cyan-200"></i>
+          <span>Simulate Morning Dew</span>
+        </button>
+
+        <!-- Button: Reset Simulation (gray) -->
+        <button
+          onclick="resetSimulation()"
+          class="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+        >
+          <i class="fa-solid fa-rotate-left text-slate-300"></i>
+          <span>Reset Simulation</span>
+        </button>
+
+        <span class="text-xs text-slate-400 ml-auto hidden sm:inline font-mono">
+          SoleSight AI · Bikaner Solar Park 10 MW Autonomous Node
+        </span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================= -->
+  <!-- FOOTER                                                  -->
+  <!-- ======================================================= -->
+  <footer class="bg-solar-navy text-slate-400 text-xs py-4 px-6 border-t border-blue-950 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>
+        SoleSight AI © 2024 · Smart India Hackathon Prototype · Autonomous Solar Cleaning &amp; Soiling Intelligence.
+      </p>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span>Location: Bikaner, Rajasthan</span>
+        <span>·</span>
+        <span>10 MW Plant (24 Array Sectors)</span>
+        <span>·</span>
+        <span class="text-amber-400 font-medium">SIH 2024</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: SPOT INSPECT & CLEAN SINGLE BLOCK                -->
+  <!-- ======================================================= -->
+  <div id="blockModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <div id="modalBlockIdBadge" class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-mono font-bold text-sm">
+            A1
+          </div>
+          <div>
+            <h4 id="modalBlockTitle" class="text-base font-bold text-slate-900">Block Diagnostics: A1</h4>
+            <p class="text-xs text-slate-500">10 MW Array Sub-station Module</p>
+          </div>
+        </div>
+        <button onclick="closeBlockModal()" class="text-slate-400 hover:text-slate-600 p-1 text-lg">
+          &times;
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+          <span class="text-slate-500 block">Current Soiling</span>
+          <span id="modalSoiling" class="text-xl font-bold text-amber-600">18.3%</span>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+          <span class="text-slate-500 block">Rated Power</span>
+          <span id="modalPower" class="text-xl font-bold text-slate-900">416 kW</span>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+          <span class="text-slate-500 block">Daily Energy Loss</span>
+          <span id="modalLoss" class="text-base font-bold text-rose-600">₹1,850</span>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+          <span class="text-slate-500 block">Dust Particulate</span>
+          <span id="modalDustType" class="text-xs font-semibold text-slate-800 font-sans mt-1 block">Fine Desert Sand</span>
+        </div>
+      </div>
+
+      <div class="bg-blue-50 p-3.5 rounded-xl border border-blue-200/60 text-xs text-blue-900 space-y-1">
+        <p class="font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-robot text-blue-600"></i>
+          SoleSight Autonomous Bot Recommendation:
+        </p>
+        <p id="modalAiAdvice" class="text-blue-800">
+          Deploy dry-brush crawling bot. Expected efficiency recovery is +11.2% in 15 minutes.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button
+          id="btnModalDeployRobot"
+          onclick="cleanSingleBlockFromModal()"
+          class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+        >
+          <i class="fa-solid fa-robot"></i>
+          <span>Deploy Robot to Block</span>
+        </button>
+        <button
+          onclick="closeBlockModal()"
+          class="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- JAVASCRIPT LOGIC & REACTIVE SIMULATION                  -->
+  <!-- ======================================================= -->
+  <script>
+    // Plant State
+    let simulationState = {
+      soilingRate: 18.3,
+      windSpeed: 18,
+      dewHarvesting: true,
+      satelliteAlerts: true,
+      dustStormActive: false,
+      morningDewActive: false,
+      waterSaved: 1240,
+      activeModalBlockId: null
+    };
+
+    // Baseline 24 blocks (6 cols x 4 rows)
+    const rows = ['A', 'B', 'C', 'D'];
+    const seedVariations = [
+      8.5, 9.2, 28.4, 14.1, 7.8, 31.2,
+      12.0, 22.4, 15.6, 29.8, 8.1, 16.5,
+      27.1, 18.0, 11.2, 9.8, 24.3, 19.5,
+      10.5, 13.8, 33.2, 17.4, 21.0, 8.9
+    ];
+
+    let blocks = [];
+    let idx = 0;
+    for (const r of rows) {
+      for (let c = 1; c <= 6; c++) {
+        blocks.push({
+          id: `${r}${c}`,
+          row: r,
+          col: c,
+          soiling: seedVariations[idx] || 18.0,
+          isCleaning: false,
+          lastCleaned: c % 2 === 0 ? '1 day ago' : '05:15 AM today',
+          ratedOutputKw: 416.7,
+          dustType: idx % 3 === 0 ? 'Fine Desert Sand' : idx % 2 === 0 ? 'Airborne Silica' : 'Bird Droppings'
+        });
+        idx++;
+      }
+    }
+
+    // Activity Logs
+    let activityLogs = [
+      { time: '02:00 PM', block: 'Block C2', action: 'Robot Deployed', trigger: 'LCR > 3.0', waterUsed: '45 L', recovery: '+11.5%', type: 'clean' },
+      { time: '08:30 AM', block: 'Block B4', action: 'Skipped', trigger: 'AI Decision', waterUsed: '0 L', recovery: 'Rain forecast', type: 'skip' },
+      { time: '05:15 AM', block: 'Block A1', action: 'Dew Harvest Clean', trigger: 'Auto', waterUsed: '0 L', recovery: '+8.2%', type: 'dew' },
+      { time: 'Yesterday', block: 'Block D5', action: 'Robot Deployed', trigger: 'Soiling > 26%', waterUsed: '40 L', recovery: '+13.1%', type: 'clean' }
+    ];
+
+    // Chart.js Power Curve Setup
+    const hours = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+    const expectedOutputData = [0.0, 0.0, 0.0, 1.2, 4.6, 7.8, 8.6, 7.9, 4.8, 1.1, 0.0, 0.0];
+    let powerChart = null;
+
+    function initPowerChart() {
+      const ctx = document.getElementById('powerChartCanvas').getContext('2d');
+      powerChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: hours,
+          datasets: [
+            {
+              label: 'Expected Output (Clean Panels)',
+              data: expectedOutputData,
+              borderColor: '#F5A62B',
+              borderDash: [5, 5],
+              borderWidth: 2,
+              pointRadius: 2,
+              tension: 0.35,
+              fill: false
+            },
+            {
+              label: 'Actual Output (Current Soiling)',
+              data: calculateActualOutput(),
+              borderColor: '#27AE60',
+              backgroundColor: 'rgba(239, 68, 68, 0.2)', // Red loss shading
+              borderWidth: 2.5,
+              pointRadius: 3,
+              pointBackgroundColor: '#27AE60',
+              tension: 0.35,
+              fill: '-1' // Fills between Expected and Actual
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { family: 'Plus Jakarta Sans', size: 11, weight: 600 },
+                color: '#334155'
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: '#0A2E5C',
+              titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 700 },
+              bodyFont: { family: 'JetBrains Mono', size: 11 },
+              callbacks: {
+                label: (c) => `${c.dataset.label}: ${c.parsed.y} MW`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(226, 232, 240, 0.7)' },
+              ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#64748b' }
+            },
+            y: {
+              min: 0,
+              max: 10,
+              title: {
+                display: true,
+                text: 'Power (MW)',
+                font: { family: 'Plus Jakarta Sans', size: 11, weight: 600 },
+                color: '#475569'
+              },
+              grid: { color: 'rgba(226, 232, 240, 0.7)' },
+              ticks: {
+                font: { family: 'JetBrains Mono', size: 10 },
+                color: '#64748b',
+                stepSize: 2
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function calculateActualOutput() {
+      const avgSoiling = getAverageSoiling();
+      const factor = (1 - (avgSoiling * 0.72) / 100);
+      return expectedOutputData.map(v => Number((v * factor).toFixed(2)));
+    }
+
+    function getAverageSoiling() {
+      const sum = blocks.reduce((acc, curr) => acc + curr.soiling, 0);
+      return Number((sum / blocks.length).toFixed(1));
+    }
+
+    // Render Solar Farm Grid
+    function renderSolarGrid() {
+      const grid = document.getElementById('solarFarmGrid');
+      grid.innerHTML = '';
+
+      blocks.forEach(b => {
+        const btn = document.createElement('button');
+        btn.setAttribute('type', 'button');
+        btn.setAttribute('data-id', b.id);
+        
+        let bgStyle = 'bg-emerald-600/90 hover:bg-emerald-500 border-emerald-400/40 text-emerald-100';
+        if (b.isCleaning) {
+          bgStyle = 'bg-blue-600 border-blue-300 text-white cleaning-pulse';
+        } else if (b.soiling > 25) {
+          bgStyle = 'bg-rose-600/90 hover:bg-rose-500 border-rose-400/60 text-rose-100';
+        } else if (b.soiling >= 10) {
+          bgStyle = 'bg-amber-500/90 hover:bg-amber-400 border-amber-300/50 text-amber-950';
+        }
+
+        btn.className = `relative aspect-4/3 rounded-lg border-2 p-1.5 sm:p-2 flex flex-col justify-between items-center transition-all cursor-pointer shadow-sm ${bgStyle}`;
+        btn.onclick = () => openBlockModal(b.id);
+        btn.onmouseenter = (e) => showTooltip(e, b);
+        btn.onmouseleave = hideTooltip;
+
+        const currentKw = (b.ratedOutputKw * (1 - b.soiling / 100) * 0.8).toFixed(0);
+
+        btn.innerHTML = `
+          <div class="absolute inset-0 opacity-20 solar-wafer-pattern rounded-md pointer-events-none"></div>
+          <div class="w-full flex items-center justify-between text-[11px] font-bold font-mono z-10">
+            <span>${b.id}</span>
+            ${b.isCleaning ? '<i class="fa-solid fa-rotate text-xs animate-spin text-white"></i>' : (b.soiling > 25 ? '<span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>' : '')}
+          </div>
+          <div class="text-center z-10">
+            <span class="text-xs sm:text-sm font-extrabold font-mono tracking-tight block">
+              ${b.isCleaning ? 'CLEAN' : b.soiling + '%'}
+            </span>
+            <span class="text-[9px] uppercase tracking-wider opacity-85 block leading-none">
+              ${b.isCleaning ? 'ROBOT' : 'SOIL'}
+            </span>
+          </div>
+          <div class="text-[10px] font-mono opacity-85 z-10 leading-none">
+            ${currentKw} kW
+          </div>
+        `;
+
+        grid.appendChild(btn);
+      });
+
+      // Update grid summary
+      const critCount = blocks.filter(b => b.soiling > 25).length;
+      const modCount = blocks.filter(b => b.soiling >= 10 && b.soiling <= 25).length;
+      document.getElementById('gridSummaryCount').innerText = `${critCount} critical / ${modCount} moderate`;
+    }
+
+    // Tooltip Handlers
+    function showTooltip(e, b) {
+      const tt = document.getElementById('blockTooltip');
+      const rect = e.currentTarget.getBoundingClientRect();
+
+      document.getElementById('tooltipBlockId').innerText = `Block ${b.id}`;
+      document.getElementById('tooltipSoiling').innerText = `${b.soiling}%`;
+      const currentKw = (b.ratedOutputKw * (1 - b.soiling / 100) * 0.8).toFixed(1);
+      document.getElementById('tooltipOutput').innerText = `${currentKw} kW`;
+      document.getElementById('tooltipLastCleaned').innerText = b.lastCleaned;
+      
+      const nextClean = document.getElementById('tooltipNextClean');
+      const badge = document.getElementById('tooltipBadge');
+
+      if (b.isCleaning) {
+        badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-600 text-white';
+        badge.innerText = 'Cleaning Active';
+        nextClean.innerText = 'In Progress';
+        nextClean.className = 'font-semibold text-[11px] text-blue-400';
+      } else if (b.soiling > 25) {
+        badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/30 text-rose-300';
+        badge.innerText = 'Critical';
+        nextClean.innerText = 'Immediate (LCR 4.2)';
+        nextClean.className = 'font-semibold text-[11px] text-rose-400 font-bold';
+      } else if (b.soiling >= 10) {
+        badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/30 text-amber-300';
+        badge.innerText = 'Moderate';
+        nextClean.innerText = 'Within 48h';
+        nextClean.className = 'font-semibold text-[11px] text-amber-400';
+      } else {
+        badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/30 text-emerald-300';
+        badge.innerText = 'Clean';
+        nextClean.innerText = 'Nominal Schedule';
+        nextClean.className = 'font-semibold text-[11px] text-emerald-400';
+      }
+
+      tt.style.left = `${rect.left + rect.width / 2}px`;
+      tt.style.top = `${rect.top - 10}px`;
+      tt.classList.remove('hidden');
+    }
+
+    function hideTooltip() {
+      document.getElementById('blockTooltip').classList.add('hidden');
+    }
+
+    // Update KPIs & AI Panel
+    function updateDashboard() {
+      const avgSoiling = getAverageSoiling();
+      const cleanBaselineMw = 7.75;
+      const lossFactor = avgSoiling * 0.68;
+      const currentGen = Math.max(1.8, Math.min(cleanBaselineMw, Number((cleanBaselineMw * (1 - lossFactor / 100)).toFixed(1))));
+      const lossPct = Math.abs(Number((((currentGen - cleanBaselineMw) / cleanBaselineMw) * 100).toFixed(0)));
+      
+      const lostMw = Math.max(0, cleanBaselineMw - currentGen);
+      const dailyLossInr = Math.max(4500, Math.round(lostMw * 5.8 * 1000 * 3.18));
+
+      // Update KPIs DOM
+      document.getElementById('kpiCurrentGen').innerText = `${currentGen} MW`;
+      document.getElementById('kpiGenTrend').innerText = `-${lossPct}% vs clean baseline`;
+      document.getElementById('kpiGenBar').style.width = `${(currentGen / 10) * 100}%`;
+
+      document.getElementById('kpiSoilingRatio').innerText = `${avgSoiling}%`;
+      document.getElementById('kpiSoilingBar').style.width = `${Math.min(100, (avgSoiling / 40) * 100)}%`;
+      
+      const badge = document.getElementById('kpiSoilingBadge');
+      const dot = document.getElementById('kpiSoilingDot');
+      const text = document.getElementById('kpiSoilingText');
+      const iconBox = document.getElementById('kpiSoilingIconBox');
+
+      if (avgSoiling > 25) {
+        badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-md inline-flex items-center gap-1 bg-rose-100 text-rose-800';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-600';
+        text.innerText = 'Critical Level';
+        iconBox.className = 'w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center';
+      } else if (avgSoiling >= 10) {
+        badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-md inline-flex items-center gap-1 bg-amber-100 text-amber-900';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+        text.innerText = 'Moderate Soiling';
+        iconBox.className = 'w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center';
+      } else {
+        badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-md inline-flex items-center gap-1 bg-emerald-100 text-emerald-800';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+        text.innerText = 'Clean Nominal';
+        iconBox.className = 'w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center';
+      }
+
+      document.getElementById('kpiRevenueLoss').innerText = `₹${dailyLossInr.toLocaleString('en-IN')}`;
+      document.getElementById('kpiHourlyLoss').innerText = `~₹${(dailyLossInr / 24).toFixed(0)}/hr at current irradiance`;
+      document.getElementById('kpiWaterSaved').innerText = `${simulationState.waterSaved.toLocaleString('en-IN')} Liters`;
+
+      // Update AI Recommendation Panel
+      const critBlocks = blocks.filter(b => b.soiling > 25);
+      const aiAnalysis = document.getElementById('aiCurrentAnalysisText');
+      const aiLcr = document.getElementById('aiLcrValue');
+      const aiRoi = document.getElementById('aiRoiValue');
+
+      if (simulationState.dustStormActive) {
+        aiAnalysis.innerText = 'CRITICAL SANDSTORM EVENT: Satellite aerosol optical depth > 1.84. Pre-deploy autonomous robots to perimeter docking stations; emergency cleaning on wind subsiding.';
+        aiLcr.innerText = '7.4 : 1';
+      } else if (critBlocks.length > 0) {
+        const ids = critBlocks.slice(0, 3).map(b => `Block ${b.id}`).join(', ');
+        aiAnalysis.innerText = `${ids}${critBlocks.length > 3 ? ` +${critBlocks.length - 3} more` : ''} showing soiling loss > cleaning cost`;
+        aiLcr.innerText = avgSoiling > 25 ? '5.8 : 1' : '4.2 : 1';
+      } else {
+        aiAnalysis.innerText = 'All sectors nominal. Scheduled dew harvest active; no high-loss zones detected.';
+        aiLcr.innerText = '1.2 : 1';
+      }
+
+      const gain = Math.round(dailyLossInr * 0.44);
+      aiRoi.innerText = `₹${gain.toLocaleString('en-IN')}`;
+
+      // Update Chart
+      if (powerChart) {
+        powerChart.data.datasets[1].data = calculateActualOutput();
+        powerChart.update('none');
+      }
+
+      // Re-render solar grid
+      renderSolarGrid();
+    }
+
+    // Render Cleaning Activity Log
+    function renderActivityLog() {
+      const tbody = document.getElementById('cleaningActivityLogBody');
+      tbody.innerHTML = '';
+
+      activityLogs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition-colors font-mono';
+
+        let badgeClass = 'bg-slate-100 text-slate-700';
+        if (log.type === 'clean') badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200/60';
+        if (log.type === 'dew') badgeClass = 'bg-blue-50 text-blue-700 border border-blue-200/60';
+        if (log.type === 'emergency') badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200/60';
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-slate-500 font-medium whitespace-nowrap">${log.time}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-800">${log.block}</td>
+          <td class="py-2.5 px-3">
+            <span class="inline-flex items-center gap-1 font-sans font-medium px-2 py-0.5 rounded text-[11px] ${badgeClass}">
+              ${log.action}
+            </span>
+          </td>
+          <td class="py-2.5 px-3 text-slate-600 font-sans">${log.trigger}</td>
+          <td class="py-2.5 px-3 text-slate-700 font-semibold">${log.waterUsed}</td>
+          <td class="py-2.5 px-3 text-right font-bold ${log.recovery.startsWith('+') ? 'text-emerald-600' : 'text-slate-600'}">${log.recovery}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Interactive Trigger Autonomous Cleaning
+    function triggerAutonomousCleaning() {
+      const btn = document.getElementById('btnTriggerCleaning');
+      const text = document.getElementById('btnTriggerText');
+      btn.disabled = true;
+      text.innerText = 'CLEANING IN PROGRESS...';
+
+      const critBlocks = blocks.filter(b => b.soiling > 25);
+      const targetBlocks = critBlocks.length > 0 ? critBlocks : blocks.filter(b => b.soiling >= 10);
+      const targetIds = new Set(targetBlocks.map(b => b.id));
+
+      blocks = blocks.map(b => targetIds.has(b.id) ? { ...b, isCleaning: true } : b);
+      renderSolarGrid();
+
+      setTimeout(() => {
+        blocks = blocks.map(b => {
+          if (targetIds.has(b.id)) {
+            return {
+              ...b,
+              isCleaning: false,
+              soiling: Number((3.5 + Math.random() * 2.5).toFixed(1)),
+              lastCleaned: 'Just now (SoleSight Robot)'
+            };
+          }
+          return b;
+        });
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        activityLogs.unshift({
+          time: timeStr,
+          block: targetBlocks.length > 1 ? `${targetBlocks.length} Blocks Fleet` : `Block ${targetBlocks[0]?.id || 'A3'}`,
+          action: 'Autonomous Robot Deployed',
+          trigger: 'LCR > 3.0 Threshold',
+          waterUsed: simulationState.dewHarvesting ? '0 L (Dry Brush)' : `${targetBlocks.length * 35} L`,
+          recovery: `+${(targetBlocks.length * 2.6).toFixed(1)}%`,
+          type: 'clean'
+        });
+
+        activityLogs = activityLogs.slice(0, 10);
+        renderActivityLog();
+        updateDashboard();
+
+        btn.disabled = false;
+        text.innerText = 'TRIGGER CLEANING';
+      }, 2000);
+    }
+
+    // Single Block Spot Modal
+    function openBlockModal(blockId) {
+      const b = blocks.find(x => x.id === blockId);
+      if (!b) return;
+
+      simulationState.activeModalBlockId = blockId;
+      document.getElementById('modalBlockIdBadge').innerText = b.id;
+      document.getElementById('modalBlockTitle').innerText = `Block Diagnostics: ${b.id}`;
+      document.getElementById('modalSoiling').innerText = `${b.soiling}%`;
+      document.getElementById('modalPower').innerText = `${b.ratedOutputKw.toFixed(0)} kW`;
+      document.getElementById('modalLoss').innerText = `₹${Math.round(b.soiling * 125)} / day`;
+      document.getElementById('modalDustType').innerText = b.dustType;
+
+      const advice = document.getElementById('modalAiAdvice');
+      if (b.soiling > 25) {
+        advice.innerText = 'Critical particulate buildup detected. Immediate robotic dry-brush clean advised. Recover +12.4% output.';
+      } else {
+        advice.innerText = 'Block is within optimal operating tolerance. Dew harvest clean scheduled for morning.';
+      }
+
+      document.getElementById('blockModal').classList.remove('hidden');
+    }
+
+    function closeBlockModal() {
+      document.getElementById('blockModal').classList.add('hidden');
+      simulationState.activeModalBlockId = null;
+    }
+
+    function cleanSingleBlockFromModal() {
+      const blockId = simulationState.activeModalBlockId;
+      if (!blockId) return;
+
+      blocks = blocks.map(b => b.id === blockId ? { ...b, isCleaning: true } : b);
+      renderSolarGrid();
+      closeBlockModal();
+
+      setTimeout(() => {
+        blocks = blocks.map(b => b.id === blockId ? {
+          ...b,
+          isCleaning: false,
+          soiling: 3.8,
+          lastCleaned: 'Just now (Spot Clean)'
+        } : b);
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        activityLogs.unshift({
+          time: timeStr,
+          block: `Block ${blockId}`,
+          action: 'Spot Clean Deployed',
+          trigger: 'Manual Dispatch',
+          waterUsed: '0 L (Dry Brush)',
+          recovery: '+10.8%',
+          type: 'clean'
+        });
+
+        renderActivityLog();
+        updateDashboard();
+      }, 1800);
+    }
+
+    // Slider & Toggle Handlers
+    function onSoilingSliderChange(val) {
+      simulationState.soilingRate = val;
+      document.getElementById('sliderSoilingValue').innerText = `${val}%`;
+
+      blocks = blocks.map(b => {
+        if (b.isCleaning) return b;
+        const jitter = ((b.col * 7 + b.row.charCodeAt(0)) % 7) - 3;
+        const computed = Math.max(1, Math.min(48, Number((b.soiling * 0.4 + (val + jitter) * 0.6).toFixed(1))));
+        return { ...b, soiling: computed };
+      });
+
+      updateDashboard();
+    }
+
+    function onWindSliderChange(val) {
+      simulationState.windSpeed = val;
+      document.getElementById('sliderWindValue').innerText = `${val} km/h`;
+      document.getElementById('weatherWind').innerText = `${val} km/h`;
+
+      const dustText = document.getElementById('weatherDustIndex');
+      if (val > 35) {
+        dustText.innerText = 'Critical';
+        dustText.className = 'text-base font-extrabold font-mono text-rose-600';
+      } else if (val > 22) {
+        dustText.innerText = 'High';
+        dustText.className = 'text-base font-extrabold font-mono text-rose-500';
+      } else {
+        dustText.innerText = 'Moderate';
+        dustText.className = 'text-base font-extrabold font-mono text-amber-600';
+      }
+    }
+
+    function onDewToggleChange(checked) {
+      simulationState.dewHarvesting = checked;
+    }
+
+    function onSatelliteToggleChange(checked) {
+      simulationState.satelliteAlerts = checked;
+    }
+
+    // Simulation Buttons
+    function simulateDustStorm() {
+      simulationState.dustStormActive = true;
+      document.getElementById('dustStormBanner').classList.remove('hidden');
+
+      // Random blocks jump to critical soiling
+      blocks = blocks.map(b => ({
+        ...b,
+        soiling: 28 + Math.floor(Math.random() * 16)
+      }));
+
+      onWindSliderChange(44);
+      document.getElementById('sliderWind').value = 44;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+      activityLogs.unshift({
+        time: timeStr,
+        block: 'All 24 Blocks',
+        action: 'Dust Storm Influx',
+        trigger: 'INSAT-3D Satellite',
+        waterUsed: '0 L',
+        recovery: '-16.4% Loss',
+        type: 'emergency'
+      });
+
+      renderActivityLog();
+      updateDashboard();
+    }
+
+    function dismissDustStormAlert() {
+      simulationState.dustStormActive = false;
+      document.getElementById('dustStormBanner').classList.add('hidden');
+      updateDashboard();
+    }
+
+    function simulateMorningDew() {
+      simulationState.morningDewActive = true;
+      document.getElementById('morningDewBanner').classList.remove('hidden');
+      document.getElementById('dewDropletOverlay').classList.remove('hidden');
+
+      setTimeout(() => {
+        simulationState.morningDewActive = false;
+        document.getElementById('morningDewBanner').classList.add('hidden');
+        document.getElementById('dewDropletOverlay').classList.add('hidden');
+      }, 2500);
+
+      // Clean soiling by ~45% via dew lubrication
+      blocks = blocks.map(b => ({
+        ...b,
+        soiling: Math.max(3.2, Number((b.soiling * 0.55).toFixed(1))),
+        lastCleaned: '05:15 AM Dew Cycle'
+      }));
+
+      simulationState.waterSaved += 320;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+      activityLogs.unshift({
+        time: timeStr,
+        block: 'Blocks A1–D6',
+        action: 'Dew Harvest Clean',
+        trigger: 'Microclimate Dew Point',
+        waterUsed: '0 L (Passive)',
+        recovery: '+9.4%',
+        type: 'dew'
+      });
+
+      renderActivityLog();
+      updateDashboard();
+    }
+
+    function resetSimulation() {
+      simulationState.soilingRate = 18.3;
+      simulationState.windSpeed = 18;
+      simulationState.dustStormActive = false;
+      simulationState.morningDewActive = false;
+      simulationState.waterSaved = 1240;
+
+      document.getElementById('dustStormBanner').classList.add('hidden');
+      document.getElementById('morningDewBanner').classList.add('hidden');
+      document.getElementById('dewDropletOverlay').classList.add('hidden');
+
+      document.getElementById('sliderSoiling').value = 18.3;
+      document.getElementById('sliderSoilingValue').innerText = '18.3%';
+      document.getElementById('sliderWind').value = 18;
+      onWindSliderChange(18);
+
+      let idx = 0;
+      blocks = blocks.map(b => {
+        const val = seedVariations[idx] || 18.0;
+        idx++;
+        return {
+          ...b,
+          soiling: val,
+          isCleaning: false,
+          lastCleaned: b.col % 2 === 0 ? '1 day ago' : '05:15 AM today'
+        };
+      });
+
+      renderActivityLog();
+      updateDashboard();
+    }
+
+    // Live Clock
+    function updateLiveClock() {
+      const now = new Date();
+      const clockStr = now.toLocaleTimeString('en-IN', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'Asia/Kolkata'
+      }) + ' IST';
+      document.getElementById('liveClockDisplay').innerText = clockStr;
+    }
+
+    // Initialize Page
+    window.addEventListener('DOMContentLoaded', () => {
+      updateLiveClock();
+      setInterval(updateLiveClock, 1000);
+      initPowerChart();
+      renderActivityLog();
+      updateDashboard();
+    });
+  </script>
+</body>
+</html>
